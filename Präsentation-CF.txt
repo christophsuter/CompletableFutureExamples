@@ -1,0 +1,231 @@
+--
+--
+Java 8 hat viele Features gebracht. Neben Stream und Lambdas ist ein weiteres Feature etwas untergegangen. CompletableFuture.
+
+
+ECMAScript 2015 hat Promise
+Scala hat Promise
+c# hat Async await
+Java hat CompletableFuture
+----
+
+	Runnable				- java 1.0
+		Fire and Forget
+		
+	ThreadExampleTest
+	-> Wie bekomme ich meine Resultate zurück?
+			
+	Future mit Callable		- Java 1.5
+		Fire and Forget, mit Rückgabewert
+	
+	FutureExampleTest
+	FutureExampleTestWithDelay
+	-> Busy Waiting
+	Motivation:
+		---	
+		ExecutorService executor = ...;
+		Future<Integer> future = executor.submit(() -> longRunningCalculate());
+
+		System.out.println("future done? " + future.isDone());
+
+		Integer result = future.get(); //Blocking
+
+		System.out.println("future done? " + future.isDone());
+		System.out.print("result: " + result);
+		----
+	
+		Annotation
+			- get is blocking
+			- User has to decide when he wants the result. And Waiting...
+			- What do we want? --> Callback, async processing
+	
+	
+	CompletableFuture		- Java 1.8
+		Fire and Forget, mit Callback
+		==> CompletableFuture gibt diese Funktionalität
+		Kompatibel zu Future Interface -> Man kann weiterhin warten
+
+
+		
+	testCompletableFuture
+----
+
+Vorteile CF
+
+- Asynchrones resultathandling
+
+- Let us trade “callback hell” for a declarative, reactive API
+
+- Future hat Tasksteuerung & Task tightly coupled
+
+-----
+
+Wieso ist das noch nicht so angekommen in der Java8 Welt?
+
+- Probleme sind etwas spezifisch
+
+- Man hat Frameworks die einem diese Arbeit abnehmen
+	--> Use CF!
+	
+- API von CF ist horrible!
+		--> Das schauen wir heute an
+https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html
+
+
+---------
+API
+
+CompletionStage<T>, --> Komme ich nachher noch dazu, Promise logik
+Future<T> --> Wenn man nicht am Resultat interessiert ist. Dann haben wir ja ein Future. --> Selbes interface
+
+
+---
+CF API:
+Future, + Future Extensions
+Factories
+CompletionStage reactive Api
+static bulk operations
+
+.
+internal API
+monitoring
+set/reset result
+
+---
+
+
+CompletionStage reactive Api vorstellen
+
+- Chaining example
+- Executor vorstellen
+- Terminal Operations vorstellen
+- AnyOf, AllOf vorstellen
+- CF erweitern selbst wenn es fertig ist.
+
+thenApply (nimmt Function) -> Hat ein result (Ist ein mapping)
+thenAccept (nimmt consumer) -> hat VOID result
+thenRun (nimmt Runnalbe) -> hat VOID result
+
+
+thenxxx (wie oben) Sync - selber thread
+thenxxxAsync (...) Async - another poolthread
+thenxxxAsync (executor) custom - new pool thread
+
+--
+Error Handling
+When Complete, handle 
+handle: Fix exception
+
+
+--- 
+
+Spezialfälle:
+- ThenCombine (flatMap)
+
+First of all, a monad doesn’t specify what is happening, that’s the responsibility of the computation within the context. A monad says what surrounds the computation that is happening.
+Now, if you want an image reference to help you out, you can think of a monad as a bubble. Some people prefer a box, but a box is something concrete so a bubble works better for me.
+These monad-bubbles have two properties:
+    a bubble can surround something
+    a bubble can receive instructions about what should it do with a surrounded thing
+
+Monad (Map, FlatMap)
+
+- ThenApply (Map)
+- ThenCombine (flatMap)
+
+----
+
+
+- Decoupling of TaskManagement und Task
+- Monad Ansatz
+--> Future.cancel macht keinen Sinn. Berechnung wird nicht abgebrochen. BSP machen 
+
+
+
+BSP
+---
+CompletableFuture<String> future = ....
+future.thenAccept(result -> System.out.println("info: " + info);
+//Thead that is processing the result is executing the "thenAccept" Function
+//Specify ahead of time, what to do when result becomes avaiable
+
+
+//Folie zeigen, wie Completable Future generiert wirt:
+Mit static constructor
+(4 Fälle, Task(Supplier) oder Runnable & mit oder ohne Executor)
+Standard: ForkJoinPool
+
+Nochmals vergleich zeigen
+
+---
+
+Fluent programming
+
+CF.supplyAsync(() -> calculateSomething())
+  .thenAccept(info -> sop("Info: " + info);
+
+  
+CF.supplyAsync(() -> calculateRadius())
+  .whenComplete((radius, exec) -> sop("Radius: " + radius)).
+  .thenApply(radius -> calculateArea(radius))
+  .thenAccept(area -> sop("Area: " + area)
+  .thenRun({} -> sop("we are finished");
+
+  
+== Als Bild
+
+==
+Vorteil:
+Von Pull zu Push. Kein Busy waiting
+
+
+CF API:
+public api
+Future, + Future Extensions (Nachlesen)
+Factories
+CompletionStage reactive Api (siehe one)
+static bulk operations
+.
+internal API
+monitoring
+set/reset result
+
+--
+Wenn fertig:
+
+
+---
+thenCombine
+
+CF<Double> circleArea = CF.supplyAsync(() -> calculateCircleArea(5))
+CF<Double> squareArea= CF.supplyAsync(() -> calculateSqareArea(5))
+
+circleArea.thenCombine(squareArea, (circle, square) -> Math.abs(circle - square))
+.thenAccept(diff -> sop("Difference between circle and square: " + diff));
+
+=> All of, Any of
+
+--
+Compose: FlatMap => thenCompose
+---
+
+getNow (Future extension)
+
+
+
+======
+We as an api could use completionStage:
+
+Bsp: ich bin eine Webseite und anstelle das ich String zurückgebe, gebe ich Completion stage zurück
+https://www.youtube.com/watch?v=Q_0_1mKTlnY 26:32
+1. Create Empty CF
+2. Setup Task + async execution 
+3. return 
+(Wieso nicht wie oben )
+
+== Key difference
+Task ist nicht mehr im CF drin. (Task is tight coupled in Future)
+=> Cancel does not make sense in cf, because it is executed in thread pool
+Als BSP zeigen
+==> FLuent sollte das nicht passieren
+

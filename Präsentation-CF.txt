@@ -1,144 +1,138 @@
 --
---
 Java 8 hat viele Features gebracht. Neben Stream und Lambdas ist ein weiteres Feature etwas untergegangen. CompletableFuture.
 
-
-ECMAScript 2015 hat Promise
-Scala hat Promise
-c# hat Async await
-Java hat CompletableFuture
-----
-
-	Runnable				- java 1.0
-		Fire and Forget
-		
-	ThreadExampleTest
-	-> Wie bekomme ich meine Resultate zurück?
-			
-	Future mit Callable		- Java 1.5
-		Fire and Forget, mit Rückgabewert
-	
-	FutureExampleTest
-	FutureExampleTestWithDelay
-	-> Busy Waiting
-	Motivation:
-		---	
-		ExecutorService executor = ...;
-		Future<Integer> future = executor.submit(() -> longRunningCalculate());
-
-		System.out.println("future done? " + future.isDone());
-
-		Integer result = future.get(); //Blocking
-
-		System.out.println("future done? " + future.isDone());
-		System.out.print("result: " + result);
-		----
-	
-		Annotation
-			- get is blocking
-			- User has to decide when he wants the result. And Waiting...
-			- What do we want? --> Callback, async processing
-	
-	
-	CompletableFuture		- Java 1.8
-		Fire and Forget, mit Callback
-		==> CompletableFuture gibt diese Funktionalität
-		Kompatibel zu Future Interface -> Man kann weiterhin warten
-
-
-		
-	testCompletableFuture
-----
-
-Vorteile CF
-
-- Asynchrones resultathandling
-
-- Let us trade “callback hell” for a declarative, reactive API
-
-- Future hat Tasksteuerung & Task tightly coupled
-
------
-
-Wieso ist das noch nicht so angekommen in der Java8 Welt?
-
-- Probleme sind etwas spezifisch
-
-- Man hat Frameworks die einem diese Arbeit abnehmen
-	--> Use CF!
-	
-- API von CF ist horrible!
-		--> Das schauen wir heute an
-https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html
-
-
----------
-API
-
-CompletionStage<T>, --> Komme ich nachher noch dazu, Promise logik
-Future<T> --> Wenn man nicht am Resultat interessiert ist. Dann haben wir ja ein Future. --> Selbes interface
-
-
----
-CF API:
-Future, + Future Extensions
-Factories
-CompletionStage reactive Api
-static bulk operations
-
-.
-internal API
-monitoring
-set/reset result
-
----
-
-
-CompletionStage reactive Api vorstellen
-
-- Chaining example
-- Executor vorstellen
-- Terminal Operations vorstellen
-- AnyOf, AllOf vorstellen
-- CF erweitern selbst wenn es fertig ist.
-
-thenApply (nimmt Function) -> Hat ein result (Ist ein mapping)
-thenAccept (nimmt consumer) -> hat VOID result
-thenRun (nimmt Runnalbe) -> hat VOID result
-
-
-thenxxx (wie oben) Sync - selber thread
-thenxxxAsync (...) Async - another poolthread
-thenxxxAsync (executor) custom - new pool thread
+==> Spickzettel am schluss mit wichtigster API
 
 --
-Error Handling
-When Complete, handle 
-handle: Fix exception
+ECMAScript 6: Promise (2015)
+Scala hat Promise
+C# async await (.NET 4.5)
+Java: CompletableFuture
+----
+CompletableFuture
+Sepparierung von ---wie--- asynchrone tasks ausgeführt werden und ---was--- diese machen.
 
 
---- 
 
-Spezialfälle:
-- ThenCombine (flatMap)
+BSP: testWasUndWie
+-> die Tasks sind unabhängig
+-> die wissen gar nicht, dass sie async ausgeführt werden
+-> Ablauf ist separiert
+----
 
-First of all, a monad doesn’t specify what is happening, that’s the responsibility of the computation within the context. A monad says what surrounds the computation that is happening.
-Now, if you want an image reference to help you out, you can think of a monad as a bubble. Some people prefer a box, but a box is something concrete so a bubble works better for me.
-These monad-bubbles have two properties:
-    a bubble can surround something
-    a bubble can receive instructions about what should it do with a surrounded thing
+Geschichte von Nebenläufigkeit in Java
+^
+
+
+
+
+
+----
+==> CF kann nur einmal gesetzt werden
+Timeout beispiel
+
+Wrap UP - CF
+- CF definiert wie, Task sagt was
+- Asynchrones resultathandling, kein Polling
+- Reaktive API
+---------
+
+
+Wie: Was wenn ein Task bereits abgeschlossen ist: Auftrag von CF
+testAttachFurtherOperations
+
+
+[ ] --> [ [ ] --> [ ] --> [ ] ]
+
+thenCompose
+
+-------
 
 Monad (Map, FlatMap)
 
 - ThenApply (Map)
 - ThenCombine (flatMap)
 
+Ein Monad definiert nicht, was berechnet wird. Dafür ist die Berechnung innerhalb des Monads zuständig. Ein Monad definiert den Kontext in welchem eine Berechnung durchgeführt wird. 
+- Monad ist ein Wrapper 
+- Monad erhält Anweisungen was mit dem wrapped inhalt gemacht wird. 
+
+Wrapping: 
+CompletableFuture.supplyAsync(() -> "URL")
+
+Instruktionen
+	map: thenApply, thenAccept, thenRun
+	flatMap: thenCombine, [acceptEither, runAfterBoth]
+
+
+
+	First of all, a monad doesn’t specify what is happening, that’s the responsibility of the computation within the context. A monad says what surrounds the computation that is happening.
+	Now, if you want an image reference to help you out, you can think of a monad as a bubble. Some people prefer a box, but a box is something concrete so a bubble works better for me.
+	These monad-bubbles have two properties:
+		a bubble can surround something / wrap as surround
+		a bubble can receive instructions about what should it do with a surrounded thing
+
+
+--------
+
+
+
+API
+
+
+
+
+
+
+
+A stage of a possibly asynchronous computation, that performs an action or computes a value when another CompletionStage completes. 
+A stage completes upon termination of its computation, but this may in turn trigger other dependent stages.
+
+Input: 
+
+An additional form (compose) applies functions of stages themselves, rather than their results.
+
+
+
+
+Start:
+stage's execution may be triggered by completion of a single stage, or both of two stages, or either of two stages. 
+- Then: Dependencies on a single stage 
+- Those triggered by completion of both of two stages may combine their results or effects, using correspondingly named methods. 
+- Those triggered by either of two stages make no guarantees about which of the results or effects are used for the dependent stage's computation.
+
+
+Dependencies among stages control the triggering of computations, but do not otherwise guarantee any particular ordering. 
+Additionally, execution of a new stage's computations may be arranged in any of three ways: 
+ 
+
+
+	
+
+"
+Two method forms support processing whether the triggering stage completed normally or exceptionally: 
+Method whenComplete allows injection of an action regardless of outcome, otherwise preserving the outcome in its completion. 
+Method handle additionally allows the stage to compute a replacement result that may enable further processing by other dependent stages. --> Rückgabewert wird verwendet --> in BSP zeigen
+In all other cases, if a stage's computation terminates abruptly with an (unchecked) exception or error, then all dependent stages requiring its completion complete exceptionally as well, with a CompletionException holding the exception as its cause. 
+If a stage is dependent on both of two stages, and both complete exceptionally, then the CompletionException may correspond to either one of these exceptions. 
+If a stage is dependent on either of two others, and only one of them completes exceptionally, no guarantees are made about whether the dependent stage completes normally or exceptionally. 
+In the case of method whenComplete, when the supplied action itself encounters an exception, then the stage exceptionally completes with this exception if not already completed exceptionally.
+"
+
+	
+
+
+- Chaining example
+- Executor vorstellen
+	Muss man sich überlegen, kommt auf Anwendung drauf an
+
+- Terminal Operations vorstellen
+- AnyOf, AllOf vorstellen
+- CF erweitern selbst wenn es fertig ist.
+
+
+
 ----
-
-
-- Decoupling of TaskManagement und Task
-- Monad Ansatz
---> Future.cancel macht keinen Sinn. Berechnung wird nicht abgebrochen. BSP machen 
 
 
 
@@ -166,10 +160,7 @@ CF.supplyAsync(() -> calculateSomething())
 
   
 CF.supplyAsync(() -> calculateRadius())
-  .whenComplete((radius, exec) -> sop("Radius: " + radius)).
   .thenApply(radius -> calculateArea(radius))
-  .thenAccept(area -> sop("Area: " + area)
-  .thenRun({} -> sop("we are finished");
 
   
 == Als Bild
@@ -179,19 +170,6 @@ Vorteil:
 Von Pull zu Push. Kein Busy waiting
 
 
-CF API:
-public api
-Future, + Future Extensions (Nachlesen)
-Factories
-CompletionStage reactive Api (siehe one)
-static bulk operations
-.
-internal API
-monitoring
-set/reset result
-
---
-Wenn fertig:
 
 
 ---
@@ -229,3 +207,15 @@ Task ist nicht mehr im CF drin. (Task is tight coupled in Future)
 Als BSP zeigen
 ==> FLuent sollte das nicht passieren
 
+---Snippets
+---	
+		ExecutorService executor = ...;
+		Future<Integer> future = executor.submit(() -> longRunningCalculate());
+
+		System.out.println("future done? " + future.isDone());
+
+		Integer result = future.get(); //Blocking
+
+		System.out.println("future done? " + future.isDone());
+		System.out.print("result: " + result);
+		----

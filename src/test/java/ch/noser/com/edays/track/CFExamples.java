@@ -43,6 +43,13 @@ public class CFExamples {
         Executor executor = Executors.newFixedThreadPool(100);
 
         //CompletableFuture with Functions
+        CompletableFuture<String> stage1 = CompletableFuture.supplyAsync(() -> "10");
+        CompletableFuture<Integer> stage2 = stage1.thenApply(Integer::valueOf);
+        CompletableFuture<Integer> stage3 = stage2.thenApplyAsync(Integer::valueOf);
+        CompletableFuture<Integer> stage4 = stage3.thenApplyAsync(i -> i * i, executor);
+        stage4.whenComplete(ValidationTasks::log);
+
+        //CompletableFuture with Functions
         CompletableFuture.supplyAsync(() -> "10")
                 .thenApply(Integer::valueOf)
                 .thenApplyAsync(Integer::valueOf)

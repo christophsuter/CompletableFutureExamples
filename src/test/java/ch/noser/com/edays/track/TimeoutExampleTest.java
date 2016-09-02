@@ -7,7 +7,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class ScoreCalculationTest {
+public class TimeoutExampleTest {
 
     @Test
     public void testCalculateScoreOfWebsiteWithTimeout() throws InterruptedException {

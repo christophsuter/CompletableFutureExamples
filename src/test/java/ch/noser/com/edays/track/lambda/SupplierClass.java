@@ -1,4 +1,4 @@
-package ch.noser.com.edays.track;
+package ch.noser.com.edays.track.lambda;
 
 import java.util.function.Supplier;
 

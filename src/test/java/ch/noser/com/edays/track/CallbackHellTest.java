@@ -32,12 +32,10 @@ public class CallbackHellTest {
                                     }
 
 
-
                                 }).join();
                     } else {
                         //ErrorHandling
                     }
-
 
 
                 }).join();

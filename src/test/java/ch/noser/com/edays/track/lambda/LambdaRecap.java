@@ -1,4 +1,4 @@
-package ch.noser.com.edays.track;
+package ch.noser.com.edays.track.lambda;
 
 import org.junit.Test;
 
@@ -28,7 +28,7 @@ public class LambdaRecap {
 
         //Method References
         CompletableFuture<Integer> aCF6 = CompletableFuture.supplyAsync(this::aSupplier);
-        CompletableFuture<Integer> aCF7 = CompletableFuture.supplyAsync(SupplierClass::aStaticSupplier);
+        CompletableFuture<Integer> aCF7 = CompletableFuture.supplyAsync(LambdaRecap::aStaticSupplier);
     }
 
 
@@ -44,7 +44,7 @@ public class LambdaRecap {
         return Integer.valueOf(str);
     }
 
-    public void aConsumer(Integer int) {
-        System.out.println("Consumed");
+    public void aConsumer(Integer integer) {
+        System.out.println("Consumed: " + integer);
     }
 }
